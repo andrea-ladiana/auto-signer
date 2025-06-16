@@ -232,14 +232,6 @@ def _parse_pages_basic(pages_spec, total_pages):
                 if 0 <= page_num < total_pages:
                     pages.append(page_num)
         return sorted(list(set(pages)))
-        pages = []
-        for part in pages_spec.split(','):
-            part = part.strip()
-            if part.isdigit():
-                page_num = int(part) - 1
-                if 0 <= page_num < total_pages:
-                    pages.append(page_num)
-        return pages
 
 
 def interactive_mode():
