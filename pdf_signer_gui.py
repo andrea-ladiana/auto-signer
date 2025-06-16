@@ -349,7 +349,7 @@ class PDFPreviewCanvas(tk.Canvas):
             self.render_page()
     
     def prev_page(self):
-        """Vai alla pagina precedente."""
+        """Vai alla pagina precedente."""        
         if self.pdf_doc and self.current_page > 0:
             self.current_page -= 1
             self.render_page()
@@ -357,10 +357,11 @@ class PDFPreviewCanvas(tk.Canvas):
     def get_relative_watermark_position(self):
         """Restituisce la posizione relativa del watermark (0-1)."""
         if not self.page_image:
-            return (0.8, 0.9)  # Default
+            return (0.8, 0.1)  # Default bottom-right
         
         rel_x = self.watermark_position[0] / self.page_image.width
-        rel_y = self.watermark_position[1] / self.page_image.height
+        # Inverti Y per il sistema di coordinate PDF (origine in basso a sinistra)
+        rel_y = 1.0 - (self.watermark_position[1] + self.watermark_size[1]) / self.page_image.height
         
         return (rel_x, rel_y)
 
