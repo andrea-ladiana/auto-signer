@@ -1349,9 +1349,15 @@ def _get_timestamp_position(signature_position: str, timestamp_relative: str) ->
         },
         "top-left": {
             "below": "bottom-left",
-            "above": "top-left", 
+            "above": "top-left",
             "left": "top-left",
             "right": "top-right"
+        },
+        "center": {
+            "below": "bottom-right",
+            "above": "top-right",
+            "left": "bottom-left",
+            "right": "bottom-right"
         }
     }
     
