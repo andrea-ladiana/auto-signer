@@ -29,7 +29,14 @@ from typing import List, Dict, Tuple, Optional
 # Tutte le funzionalità avanzate sono ora integrate direttamente
 
 
-def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, position="bottom-right"):
+def create_watermark_pdf(
+    image_path,
+    scale_factor=1.0,
+    output_path=None,
+    position="bottom-right",
+    page_size=None,
+    original_pdf_path=None,
+):
     """
     Crea un PDF temporaneo contenente solo il marchio (watermark).
     
@@ -38,6 +45,9 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
         scale_factor (float): Fattore di scala per ridimensionare il marchio
         output_path (str): Percorso del file PDF temporaneo (opzionale)
         position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
+        page_size (tuple): Dimensioni pagina (larghezza, altezza) in punti.
+        original_pdf_path (str): PDF da cui ricavare la dimensione pagina se page_size non 
+            è fornito.
     
     Returns:
         str: Percorso del file PDF temporaneo creato
@@ -50,8 +60,23 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
     img_width, img_height, _, _ = calculate_watermark_size_points(image_path, scale_factor)
     
     # Crea un PDF con l'immagine
-    c = canvas.Canvas(output_path, pagesize=letter)
-    page_width, page_height = letter
+    # Determina dimensioni pagina
+    if page_size is None and original_pdf_path:
+        try:
+            with open(original_pdf_path, "rb") as f:
+                reader = PdfReader(f)
+                first_page = reader.pages[0]
+                page_width = float(first_page.mediabox.width)
+                page_height = float(first_page.mediabox.height)
+                page_size = (page_width, page_height)
+        except Exception:
+            page_size = letter
+    if page_size is None:
+        page_size = letter
+    page_width, page_height = page_size
+
+    # Crea un PDF con l'immagine
+    c = canvas.Canvas(output_path, pagesize=page_size)
       # Calcola la posizione dell'immagine in base al parametro position
     # Lascia un margine di 20 punti dai bordi
     margin = 20
@@ -132,8 +157,22 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path,
     # Gestione pagine specifiche anche in modalità standard
     pages_to_process = kwargs.get('pages', 'all')
     exclude_pages = kwargs.get('exclude_pages', None)
-    
-    watermark_pdf_path = create_watermark_pdf(watermark_image_path, scale_factor, position=position)
+
+    # Ricava dimensioni pagina dal PDF originale
+    with open(input_pdf_path, 'rb') as f:
+        reader_tmp = PdfReader(f)
+        first_page = reader_tmp.pages[0]
+        page_size = (
+            float(first_page.mediabox.width),
+            float(first_page.mediabox.height),
+        )
+
+    watermark_pdf_path = create_watermark_pdf(
+        watermark_image_path,
+        scale_factor,
+        position=position,
+        page_size=page_size,
+    )
     
     try:
         # Leggi il PDF originale
@@ -1167,11 +1206,16 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
             timestamp_image = create_timestamp_image(timestamp_format, timestamp_custom)
             temp_files.append(timestamp_image)
         
-        # Determina pagine da processare
+        # Determina pagine da processare e dimensioni pagina
         with open(input_pdf_path, 'rb') as file:
             reader = PdfReader(file)
             total_pages = len(reader.pages)
-            
+            first_page = reader.pages[0]
+            page_size = (
+                float(first_page.mediabox.width),
+                float(first_page.mediabox.height),
+            )
+
             pages_to_sign = parse_pages_specification(
                 kwargs.get('pages', 'all'), total_pages
             )
@@ -1189,7 +1233,12 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
             print(f"📋 Pagine selezionate: {', '.join(pages_display)}")
         
         # Crea watermark principale
-        watermark_pdf_path = create_watermark_pdf(processed_image, scale_factor, position=position)
+        watermark_pdf_path = create_watermark_pdf(
+            processed_image,
+            scale_factor,
+            position=position,
+            page_size=page_size,
+        )
         temp_files.append(watermark_pdf_path)
         
         # Crea watermark timestamp se necessario
@@ -1197,7 +1246,12 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
         if timestamp_image:
             # Posiziona timestamp in base alla firma
             timestamp_position = _get_timestamp_position(position, kwargs.get('timestamp_position', 'below'))
-            timestamp_pdf_path = create_watermark_pdf(timestamp_image, 0.5, position=timestamp_position)
+            timestamp_pdf_path = create_watermark_pdf(
+                timestamp_image,
+                0.5,
+                position=timestamp_position,
+                page_size=page_size,
+            )
             temp_files.append(timestamp_pdf_path)
         
         # Processa PDF
