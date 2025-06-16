@@ -309,6 +309,7 @@ last_watermark_path: '~/signatures/official.png'
 window_geometry: '1200x800'
 preview_quality: 'high'  # high, medium, low
 theme: 'default'
+benchmark_preview: false  # stampa il tempo di aggiornamento anteprima
 
 # Advanced defaults
 default_pages: 'all'
