@@ -248,37 +248,34 @@ def _has_advanced_features(kwargs):
 
 def _parse_pages_basic(pages_spec, total_pages):
     """Analisi base delle pagine senza il modulo avanzato."""
+    pages = []
+
     if pages_spec == 'first':
-        return [0] if total_pages > 0 else []
+        if total_pages > 0:
+            pages.append(0)
     elif pages_spec == 'last':
-        return [total_pages - 1] if total_pages > 0 else []
+        if total_pages > 0:
+            pages.append(total_pages - 1)
     elif pages_spec.isdigit():
         page_num = int(pages_spec) - 1
-        return [page_num] if 0 <= page_num < total_pages else []
+        if 0 <= page_num < total_pages:
+            pages.append(page_num)
     else:
         # Gestione base di range separati da virgole
-        pages = []
         for part in pages_spec.split(','):
             part = part.strip()
             if '-' in part:
                 try:
                     start, end = map(int, part.split('-'))
-                    pages.extend(range(start-1, min(end, total_pages)))
-                except:
+                    pages.extend(range(start - 1, min(end, total_pages)))
+                except ValueError:
                     continue
             elif part.isdigit():
                 page_num = int(part) - 1
                 if 0 <= page_num < total_pages:
                     pages.append(page_num)
-        return sorted(list(set(pages)))
-        pages = []
-        for part in pages_spec.split(','):
-            part = part.strip()
-            if part.isdigit():
-                page_num = int(part) - 1
-                if 0 <= page_num < total_pages:
-                    pages.append(page_num)
-        return pages
+
+    return sorted(list(set(pages)))
 
 
 def interactive_mode():
