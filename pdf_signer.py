@@ -37,7 +37,7 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
         image_path (str): Percorso dell'immagine del marchio
         scale_factor (float): Fattore di scala per ridimensionare il marchio
         output_path (str): Percorso del file PDF temporaneo (opzionale)
-        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left", "center")
     
     Returns:
         str: Percorso del file PDF temporaneo creato
@@ -73,7 +73,8 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
             "bottom-right": (page_width - img_width - margin, margin),
             "bottom-left": (margin, margin),
             "top-right": (page_width - img_width - margin, page_height - img_height - margin),
-            "top-left": (margin, page_height - img_height - margin)
+            "top-left": (margin, page_height - img_height - margin),
+            "center": ((page_width - img_width) / 2, (page_height - img_height) / 2)
         }
         
         # Verifica che la posizione sia valida
@@ -110,7 +111,7 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path,
         watermark_image_path (str): Percorso dell'immagine del marchio
         output_pdf_path (str): Percorso del file PDF di output
         scale_factor (float): Fattore di scala per il marchio (default: 1.0)
-        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left", "center")
         **kwargs: Parametri avanzati (pages, opacity, border_enabled, timestamp_enabled, etc.)
     """
     # Verifica che i file esistano
@@ -524,7 +525,10 @@ Formati immagine supportati: PNG, JPG, JPEG, GIF (SVG con modulo avanzato)
         "-p", "--position",
         choices=["bottom-right", "bottom-left", "top-right", "top-left", "center"],
         default="bottom-right",
-        help="Posizione del marchio (default: bottom-right)"
+        help=(
+            "Posizione del marchio (default: bottom-right). "
+            "Opzioni: bottom-right, bottom-left, top-right, top-left, center"
+        )
     )
     
     # Opzioni per selezione pagine
