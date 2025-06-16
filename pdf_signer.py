@@ -437,46 +437,6 @@ def interactive_mode():
         print(f"\n❌ Errore durante l'elaborazione: {e}")
         print("💡 Suggerimento: Controlla i percorsi dei file e riprova")
     
-    while True:
-        position_input = input("Scegli la posizione (1-4, default 1): ").strip()
-        if position_input in position_map:
-            position = position_map[position_input]
-            break
-        else:
-            print("Scelta non valida. Inserisci un numero da 1 a 4.")
-    
-    # Percorso dell'immagine marchio
-    watermark_path = "sign.png"
-    if not os.path.exists(watermark_path):
-        print(f"Attenzione: Nessun file marchio trovato (sign.png).")
-        watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')    # Input del percorso di output (opzionale)
-    output_input = input("Inserisci il percorso di output (lascia vuoto per generarlo automaticamente): ").strip().strip('"')
-    
-    if output_input:
-        output_path = output_input
-    else:
-        # Genera il percorso di output automaticamente
-        input_path = Path(pdf_path)
-        output_path = str(input_path.parent / (input_path.stem + "_signed" + input_path.suffix))
-    
-    print(f"\n=== Configurazione ===")
-    print(f"PDF di input: {pdf_path}")
-    print(f"Marchio: {watermark_path}")
-    print(f"Fattore di scala: {scale_factor}")
-    print(f"Posizione: {position}")
-    print(f"PDF di output: {output_path}")
-    
-    confirm = input("\nProcedere con l'elaborazione? (s/n): ").strip().lower()
-    if confirm not in ['s', 'si', 'y', 'yes']:
-        print("Operazione annullata.")
-        return
-    
-    try:
-        add_watermark_to_pdf(pdf_path, watermark_path, output_path, scale_factor, position)
-        print(f"\n✅ Successo! PDF firmato salvato in: {output_path}")
-        
-    except Exception as e:
-        print(f"\n❌ Errore durante l'elaborazione: {e}")
 
 
 def command_line_mode():
