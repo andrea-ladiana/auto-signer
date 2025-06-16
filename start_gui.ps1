@@ -11,7 +11,7 @@ python -m pip install -r requirements.txt
 
 Write-Host ""
 Write-Host "Installazione dipendenze aggiuntive per GUI..." -ForegroundColor Yellow
-python -m pip install PyMuPDF==1.23.0
+python -m pip install PyMuPDF==1.23.26
 python -m pip install tkinterdnd2==0.3.0
 
 Write-Host ""

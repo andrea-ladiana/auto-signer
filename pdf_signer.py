@@ -46,17 +46,8 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
         # Crea un file temporaneo
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
         output_path = temp_file.name
-        temp_file.close()
-    
-    # Apri l'immagine per ottenere le dimensioni
-    try:
-        with Image.open(image_path) as img:
-            img_width, img_height = img.size
-    except Exception as e:
-        raise ValueError(f"Errore nell'aprire l'immagine {image_path}: {e}")
-      # Applica il fattore di scala
-    img_width *= scale_factor
-    img_height *= scale_factor
+        temp_file.close()    # Usa la funzione condivisa per calcolare le dimensioni
+    img_width, img_height, _, _ = calculate_watermark_size_points(image_path, scale_factor)
     
     # Crea un PDF con l'immagine
     c = canvas.Canvas(output_path, pagesize=letter)
@@ -227,6 +218,20 @@ def _parse_pages_basic(pages_spec, total_pages):
         return [page_num] if 0 <= page_num < total_pages else []
     else:
         # Gestione base di range separati da virgole
+        pages = []
+        for part in pages_spec.split(','):
+            part = part.strip()
+            if '-' in part:
+                try:
+                    start, end = map(int, part.split('-'))
+                    pages.extend(range(start-1, min(end, total_pages)))
+                except:
+                    continue
+            elif part.isdigit():
+                page_num = int(part) - 1
+                if 0 <= page_num < total_pages:
+                    pages.append(page_num)
+        return sorted(list(set(pages)))
         pages = []
         for part in pages_spec.split(','):
             part = part.strip()
@@ -905,9 +910,7 @@ def add_image_effects(image_path: str, border_width: int = 0, border_color=(0, 0
                 new_size = (img.width + 2 * border_width, img.height + 2 * border_width)
                 bordered_img = Image.new('RGBA', new_size, (*border_color, 255))
                 bordered_img.paste(img, (border_width, border_width), img)
-                img = bordered_img
-            
-            # Aggiungi ombra (implementazione semplificata)
+                img = bordered_img            # Aggiungi ombra (implementazione semplificata)
             if shadow_enabled:
                 shadow_x, shadow_y = shadow_offset
                 shadow_size = (img.width + abs(shadow_x), img.height + abs(shadow_y))
@@ -919,7 +922,7 @@ def add_image_effects(image_path: str, border_width: int = 0, border_color=(0, 0
                 shadow_img.paste(img, (max(0, -shadow_x), max(0, -shadow_y)), img)
                 img = shadow_img
             
-            # Salva immagine modificata
+            # Salva immagine con effetti
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
             temp_path = temp_file.name
             temp_file.close()
@@ -1041,10 +1044,15 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
         
         if not body:
             body = f"In allegato il PDF firmato: {Path(pdf_path).name}"
-        
-        # Crea messaggio email
+          # Crea messaggio email
         msg = MIMEMultipart()
-        msg['From'] = email_config['from_address']
+        
+        # Gestisci diversi formati di configurazione
+        from_addr = email_config.get('from_address') or email_config.get('sender', {}).get('email')
+        if not from_addr:
+            from_addr = email_config.get('smtp', {}).get('username')
+        
+        msg['From'] = from_addr
         msg['To'] = ', '.join(recipients)
         msg['Subject'] = subject
         
@@ -1063,14 +1071,21 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
                 )
                 msg.attach(part)
         
-        # Connetti al server e invia
-        server = smtplib.SMTP(email_config['smtp_server'], email_config.get('smtp_port', 587))
+        # Connetti al server e invia - gestisci diverse strutture config
+        smtp_config = email_config.get('smtp', email_config)
+        smtp_server = smtp_config.get('server') or smtp_config.get('smtp_server')
+        smtp_port = smtp_config.get('port') or smtp_config.get('smtp_port', 587)
+        username = smtp_config.get('username')
+        password = smtp_config.get('password')
+        use_tls = smtp_config.get('use_tls', True)
         
-        if email_config.get('use_tls', True):
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        
+        if use_tls:
             server.starttls()
         
-        if email_config.get('username') and email_config.get('password'):
-            server.login(email_config['username'], email_config['password'])
+        if username and password:
+            server.login(username, password)
         
         server.send_message(msg)
         server.quit()
@@ -1308,4 +1323,30 @@ def _get_timestamp_position(signature_position: str, timestamp_relative: str) ->
     )
 
 
-# Rimuovo le liste di utility per retrocompatibilità che causano errori
+def calculate_watermark_size_points(image_path, scale_factor, dpi=300):
+    """
+    Calcola la dimensione del watermark in punti PDF in modo coerente.
+    
+    Args:
+        image_path: Percorso all'immagine del watermark
+        scale_factor: Fattore di scala da applicare
+        dpi: DPI da assumere per la conversione pixel->punti
+    
+    Returns:
+        Tuple (width_points, height_points, width_pixels, height_pixels)
+    """
+    try:
+        with Image.open(image_path) as img:
+            img_width_px, img_height_px = img.size
+    except Exception as e:
+        raise ValueError(f"Errore nell'aprire l'immagine {image_path}: {e}")
+    
+    # Converti da pixel a punti PDF (1 punto = 1/72 pollici)
+    base_width_points = (img_width_px / dpi) * 72
+    base_height_points = (img_height_px / dpi) * 72
+    
+    # Applica il fattore di scala
+    final_width_points = base_width_points * scale_factor
+    final_height_points = base_height_points * scale_factor
+    
+    return final_width_points, final_height_points, img_width_px, img_height_px

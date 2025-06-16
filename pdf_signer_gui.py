@@ -22,7 +22,7 @@ import subprocess
 import sys
 
 # Import delle funzioni dal modulo originale
-from pdf_signer import add_watermark_to_pdf, create_watermark_pdf
+from pdf_signer import add_watermark_to_pdf, create_watermark_pdf, calculate_watermark_size_points
 
 class ConfigManager:
     """Gestisce i profili e le configurazioni dell'applicazione."""
@@ -40,11 +40,11 @@ class ConfigManager:
         self.config_dir.mkdir(exist_ok=True)
     
     def load_config(self):
-        """Carica la configurazione generale."""
+        """Carica la configurazione generale."""        
         default_config = {
             'last_watermark_path': '',
             'last_output_dir': str(Path.home() / "Documents"),
-            'default_scale': 0.2,
+            'default_scale': 1.0,
             'default_position': 'bottom-right',
             'default_opacity': 0.8,
             'window_geometry': '1200x800',
@@ -95,7 +95,7 @@ class ConfigManager:
         """Restituisce i profili predefiniti con nuove funzionalità."""
         return {
             "Firma Standard": {
-                "scale": 0.2,
+                "scale": 1.0,
                 "position": "bottom-right",
                 "opacity": 0.8,
                 "watermark_path": "sign.png",
@@ -115,7 +115,7 @@ class ConfigManager:
                 "email_template": ""
             },
             "Firma Piccola": {
-                "scale": 0.1,
+                "scale": 0.5,
                 "position": "bottom-right",
                 "opacity": 0.6,
                 "watermark_path": "sign.png", 
@@ -133,9 +133,8 @@ class ConfigManager:
                 "email_to": "",
                 "email_subject": "PDF Firmato",
                 "email_template": ""
-            },
-            "Firma Ufficiale": {
-                "scale": 0.3,
+            },            "Firma Ufficiale": {
+                "scale": 1.5,
                 "position": "bottom-left",
                 "opacity": 1.0,
                 "watermark_path": "signAL.png",
@@ -155,7 +154,7 @@ class ConfigManager:
                 "email_template": ""
             },
             "Prima Pagina": {
-                "scale": 0.25,
+                "scale": 1.2,
                 "position": "bottom-right",
                 "opacity": 0.9,
                 "watermark_path": "sign.png",
@@ -175,7 +174,7 @@ class ConfigManager:
                 "email_template": ""
             },
             "Effetti Completi": {
-                "scale": 0.2,
+                "scale": 1.0,
                 "position": "bottom-right", 
                 "opacity": 0.8,
                 "watermark_path": "sign.png",
@@ -287,15 +286,13 @@ class PDFPreviewCanvas(tk.Canvas):
             
             # Converti per Tkinter
             self.photo = ImageTk.PhotoImage(self.page_image)
-            
-            # Pulisci e mostra
+              # Pulisci e mostra
             self.delete("all")
             x = (canvas_width - self.page_image.width) // 2
             y = (canvas_height - self.page_image.height) // 2
             self.create_image(x, y, anchor='nw', image=self.photo)
             
-        except Exception as e:
-            print(f"Errore nel rendering: {e}")
+        except Exception as e:            print(f"Errore nel rendering: {e}")
     
     def set_watermark(self, watermark_path, scale, position, opacity=0.8):
         """Imposta il watermark per l'anteprima."""
@@ -304,13 +301,30 @@ class PDFPreviewCanvas(tk.Canvas):
                 self.watermark_image = None
                 return
             
+            # Usa la stessa logica di dimensionamento del PDF per coerenza
+            width_points, height_points, img_width_px, img_height_px = calculate_watermark_size_points(
+                watermark_path, scale
+            )
+            
+            # Converti punti PDF in pixel per il display tenendo conto del scale_factor della pagina
+            # Nel PDF: 1 punto PDF = 1/72 pollici
+            # Nella preview: le dimensioni devono essere scalate come la pagina
+            if hasattr(self, 'scale_factor') and self.scale_factor:
+                # Usa il fattore di scala della pagina per mantenere le proporzioni corrette
+                display_width = int(width_points * self.scale_factor)
+                display_height = int(height_points * self.scale_factor)
+            else:
+                # Fallback se scale_factor non è ancora disponibile
+                display_width = int(width_points)
+                display_height = int(height_points)
+            
             # Carica e ridimensiona l'immagine watermark
             img = Image.open(watermark_path)
             if img.mode != 'RGBA':
                 img = img.convert('RGBA')
             
-            # Applica scala
-            new_size = (int(img.width * scale), int(img.height * scale))
+            # Ridimensiona usando le dimensioni calcolate in modo coerente
+            new_size = (display_width, display_height)
             img = img.resize(new_size, Image.Resampling.LANCZOS)
             
             # Applica opacità
@@ -487,7 +501,7 @@ class PDFSignerGUI:
         self.pdf_path = tk.StringVar()
         self.watermark_path = tk.StringVar(value=self.config_manager.config.get('last_watermark_path', 'sign.png'))
         self.output_path = tk.StringVar()
-        self.scale_var = tk.DoubleVar(value=self.config_manager.config.get('default_scale', 0.2))
+        self.scale_var = tk.DoubleVar(value=self.config_manager.config.get('default_scale', 1.0))
         self.position_var = tk.StringVar(value=self.config_manager.config.get('default_position', 'bottom-right'))
         self.opacity_var = tk.DoubleVar(value=self.config_manager.config.get('default_opacity', 0.8))
         self.selected_profile = tk.StringVar(value="Nessun profilo")
@@ -675,10 +689,9 @@ class PDFSignerGUI:
         
         # Scala
         scale_frame = ttk.LabelFrame(scrollable_frame, text="Dimensione", padding=5)
-        scale_frame.pack(fill='x', pady=(0, 10), padx=5)
-        
-        scale_scale = ttk.Scale(scale_frame, from_=0.05, to=1.0, variable=self.scale_var, 
-                               orient='horizontal', command=self.on_settings_change)
+        scale_frame.pack(fill='x', pady=(0, 10), padx=5)        
+        scale_scale = ttk.Scale(scale_frame, from_=0.05, to=5.0, variable=self.scale_var, 
+                                orient='horizontal', command=self.on_settings_change)
         scale_scale.pack(fill='x')
         
         scale_label = ttk.Label(scale_frame, text="")
@@ -1444,12 +1457,14 @@ class PDFSignerGUI:
             border_width = self.border_width_var.get()
             border_color_hex = self.border_color_var.get()
             border_color_rgb = tuple(int(border_color_hex.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            
-            # Parametri timestamp
+              # Parametri timestamp
             timestamp_enabled = self.timestamp_enabled_var.get()
             timestamp_format = self.timestamp_format_var.get()
             timestamp_position = self.timestamp_position_var.get()
             
+            print(f"⏰ Debug: Timestamp abilitato: {timestamp_enabled}")
+            if timestamp_enabled:
+                print(f"⏰ Debug: Formato timestamp: {timestamp_format}, Posizione: {timestamp_position}")
             # Parametri metadati
             metadata = {}
             if self.add_metadata_var.get():
@@ -1468,25 +1483,67 @@ class PDFSignerGUI:
                     'cc': self.email_cc_var.get() if self.email_cc_var.get() else None,
                     'subject': self.email_subject_var.get(),
                     'template_path': self.email_template_var.get() if self.email_template_var.get() else None
-                }
-              # Elabora il PDF con parametri avanzati
+                }            # Prepara parametri per email se abilitata
+            kwargs = {
+                'opacity': self.opacity_var.get(),
+                'pages': pages,
+                'border_width': border_width,
+                'border_color': border_color_rgb,
+                'shadow_enabled': self.shadow_enabled_var.get(),
+                'shadow_offset': (self.shadow_offset_x_var.get(), self.shadow_offset_y_var.get()),
+                'timestamp': timestamp_enabled,
+                'timestamp_format': timestamp_format,
+                'timestamp_position': timestamp_position,
+                'add_metadata': bool(metadata),
+                'author': metadata.get('author'),
+                'title': metadata.get('title'),
+                'subject': metadata.get('subject')
+            }            # Aggiungi parametri email se abilitata
+            if email_config and email_config.get('to'):
+                print(f"🔧 Debug: Email config ricevuta: {email_config}")
+                
+                # Crea configurazione email temporanea
+                email_recipients = [addr.strip() for addr in email_config['to'].split(',') if addr.strip()]
+                if email_config.get('cc'):
+                    email_recipients.extend([addr.strip() for addr in email_config['cc'].split(',') if addr.strip()])
+                
+                print(f"📧 Debug: Email recipients: {email_recipients}")
+                
+                # Cerca il file di configurazione email
+                config_files = [
+                    'email_config.yaml',
+                    'email_config_example.yaml', 
+                    'email_config_default.yaml'
+                ]
+                
+                email_config_path = None
+                for config_file in config_files:
+                    if os.path.exists(config_file):
+                        email_config_path = config_file
+                        print(f"✅ Trovato file configurazione email: {config_file}")
+                        break
+                
+                if email_config_path:
+                    kwargs.update({
+                        'email_recipients': email_recipients,
+                        'email_subject': email_config.get('subject', 'PDF Firmato'),
+                        'email_template': email_config.get('template_path'),
+                        'email_config': email_config_path
+                    })
+                    print(f"📧 Email abilitata con config: {email_config_path}")
+                else:
+                    print("⚠️ Nessun file di configurazione email trovato. Funzionalità email disabilitata.")
+            else:
+                print("📧 Debug: Email non abilitata o configurazione mancante")
+            
+            # Elabora il PDF con parametri avanzati
             add_watermark_to_pdf(
                 input_pdf_path=self.pdf_path.get(),
                 watermark_image_path=self.watermark_path.get(),
                 output_pdf_path=self.output_path.get(),
-                scale=self.scale_var.get(),
+                scale_factor=self.scale_var.get(),
                 position=position,
-                opacity=self.opacity_var.get(),
-                pages=pages,
-                border_width=border_width,
-                border_color=border_color_rgb,
-                shadow_enabled=self.shadow_enabled_var.get(),
-                shadow_offset=(self.shadow_offset_x_var.get(), self.shadow_offset_y_var.get()),
-                timestamp_enabled=timestamp_enabled,
-                timestamp_format=timestamp_format,
-                timestamp_position=timestamp_position,
-                metadata=metadata,
-                email_config=email_config
+                **kwargs
             )
             
             message = f"PDF firmato salvato: {self.output_path.get()}"

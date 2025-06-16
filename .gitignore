@@ -40,5 +40,3 @@ ENV/
 Thumbs.db
 pdf/
 
-# Test files
-test_advanced_features.py

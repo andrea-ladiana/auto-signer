@@ -1,0 +1,30 @@
+smtp:
+  server: 'smtp.gmail.com'
+  port: 587
+  username: 'your-email@gmail.com'  # Inserire il proprio email
+  password: 'your-app-password'     # Inserire la propria password o App Password per Gmail
+  use_tls: true
+
+sender:
+  name: 'PDF Signer'
+  email: 'your-email@gmail.com'     # Inserire il proprio email
+
+# Configurazione per testing con server email locale o di sviluppo
+# smtp:
+#   server: '127.0.0.1'
+#   port: 1025
+#   username: ''
+#   password: ''
+#   use_tls: false
+
+from_address: 'your-email@gmail.com'  # Inserire il proprio email
+default_subject: 'PDF Firmato Digitalmente'
+default_body: |
+  Gentile destinatario,
+  
+  In allegato trova il documento PDF firmato digitalmente.
+  
+  Questo documento è stato processato automaticamente dal sistema PDF Signer.
+  
+  Cordiali saluti,
+  Sistema PDF Signer

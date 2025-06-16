@@ -3,7 +3,7 @@
 
 last_watermark_path: 'sign.png'
 last_output_dir: '~/Documents'
-default_scale: 0.2
+default_scale: 0.5
 default_position: 'bottom-right'
 default_opacity: 0.8
 window_geometry: '1200x800'

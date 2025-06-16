@@ -10,7 +10,7 @@ python -m pip install -r requirements.txt
 
 echo.
 echo Installazione dipendenze aggiuntive per GUI...
-python -m pip install PyMuPDF==1.23.0
+python -m pip install PyMuPDF==1.23.26
 python -m pip install tkinterdnd2==0.3.0
 
 echo.
