@@ -1,0 +1,32 @@
+# Template Email per PDF Signer
+# Personalizza oggetto e corpo dell'email
+
+subject: "Documento PDF Firmato - {{filename}}"
+
+body: |
+  Gentile destinatario,
+  
+  In allegato troverai il documento PDF firmato digitalmente.
+  
+  Dettagli della firma:
+  - Data e ora: {{timestamp}}
+  - Documento: {{filename}}
+  - Pagine firmate: {{pages_signed}}
+  
+  Questo documento è stato elaborato automaticamente dal sistema PDF Signer.
+  
+  Cordiali saluti,
+  {{author}}
+
+# Allegati aggiuntivi (opzionale)
+additional_attachments:
+  - path/to/certificate.pdf
+  - path/to/instructions.txt
+
+# Variabili disponibili nel template:
+# {{filename}} - Nome del file PDF
+# {{timestamp}} - Data e ora corrente
+# {{pages_signed}} - Elenco delle pagine firmate
+# {{author}} - Autore specificato nei metadati
+# {{title}} - Titolo del documento
+# {{subject}} - Oggetto del documento

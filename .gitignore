@@ -39,3 +39,6 @@ ENV/
 .DS_Store
 Thumbs.db
 pdf/
+
+# Test files
+test_advanced_features.py

@@ -1,0 +1,24 @@
+# Configurazione Email per PDF Signer
+# Copia questo file e rinominalo in email_config.yaml
+# Inserisci le tue credenziali SMTP
+
+smtp_server: smtp.gmail.com
+smtp_port: 587
+username: your_email@gmail.com
+password: your_app_password
+
+# Per Gmail, usa una password per app invece della password normale
+# https://support.google.com/accounts/answer/185833
+
+# Altri provider comuni:
+# Outlook/Hotmail:
+#   smtp_server: smtp-mail.outlook.com
+#   smtp_port: 587
+
+# Yahoo:
+#   smtp_server: smtp.mail.yahoo.com
+#   smtp_port: 587
+
+# Provider personalizzato:
+#   smtp_server: mail.tuodominio.com
+#   smtp_port: 465 (per SSL) o 587 (per TLS)

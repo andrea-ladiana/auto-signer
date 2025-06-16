@@ -1,0 +1,17 @@
+Oggetto: PDF Firmato - {pdf_name}
+
+Gentile destinatario,
+
+In allegato trovi il PDF firmato: {pdf_name}
+
+Il documento è stato elaborato e firmato digitalmente il {timestamp}.
+
+Funzionalità utilizzate:
+- Firma digitale applicata
+- Timestamp di elaborazione
+- Metadati aggiornati
+
+Per qualsiasi domanda o chiarimento, non esitare a contattarmi.
+
+Cordiali saluti,
+PDF Signer Advanced
