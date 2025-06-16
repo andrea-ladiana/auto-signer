@@ -1,7 +1,9 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-Programma per aggiungere un marchio (watermark) a tutte le pagine di un file PDF.
+Programma unificato per aggiungere un marchio (watermark) a tutte le pagine di un file PDF.
 Il marchio viene posizionato in fondo a destra di ogni pagina.
+
+Supporta sia l'uso da riga di comando che l'interfaccia interattiva.
 """
 
 import os
@@ -11,6 +13,7 @@ from PyPDF2 import PdfWriter, PdfReader
 from PIL import Image
 import tempfile
 import argparse
+import sys
 from pathlib import Path
 
 
@@ -127,8 +130,72 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path, 
     print(f"Operazione completata! PDF salvato in: {output_pdf_path}")
 
 
-def main():
-    """Funzione principale del programma."""
+def interactive_mode():
+    """Modalità interattiva del programma."""
+    print("=== Modalità Interattiva - Programma per aggiungere marchio ai PDF ===\n")
+    
+    # Input del percorso del PDF
+    while True:
+        pdf_path = input("Inserisci il percorso completo del file PDF: ").strip().strip('"')
+        if os.path.exists(pdf_path) and pdf_path.lower().endswith('.pdf'):
+            break
+        else:
+            print("File non trovato o non è un PDF. Riprova.")
+    
+    # Input del fattore di scala
+    while True:
+        try:
+            scale_input = input("Inserisci il fattore di scala per il marchio (default 0.2): ").strip()
+            if scale_input == "":
+                scale_factor = 0.2
+            else:
+                scale_factor = float(scale_input)
+            if scale_factor > 0:
+                break
+            else:
+                print("Il fattore di scala deve essere maggiore di 0.")
+        except ValueError:
+            print("Inserisci un numero valido.")
+    
+    # Percorso dell'immagine marchio
+    watermark_path = "signAL.png"
+    if not os.path.exists(watermark_path):
+        watermark_path = "sign.png"
+        if not os.path.exists(watermark_path):
+            print(f"Attenzione: Nessun file marchio trovato (signAL.png o sign.png).")
+            watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')
+    
+    # Input del percorso di output (opzionale)
+    output_input = input("Inserisci il percorso di output (lascia vuoto per generarlo automaticamente): ").strip().strip('"')
+    
+    if output_input:
+        output_path = output_input
+    else:
+        # Genera il percorso di output automaticamente
+        input_path = Path(pdf_path)
+        output_path = str(input_path.parent / (input_path.stem + "_signed" + input_path.suffix))
+    
+    print(f"\n=== Configurazione ===")
+    print(f"PDF di input: {pdf_path}")
+    print(f"Marchio: {watermark_path}")
+    print(f"Fattore di scala: {scale_factor}")
+    print(f"PDF di output: {output_path}")
+    
+    confirm = input("\nProcedere con l'elaborazione? (s/n): ").strip().lower()
+    if confirm not in ['s', 'si', 'y', 'yes']:
+        print("Operazione annullata.")
+        return
+    
+    try:
+        add_watermark_to_pdf(pdf_path, watermark_path, output_path, scale_factor)
+        print(f"\n✅ Successo! PDF firmato salvato in: {output_path}")
+        
+    except Exception as e:
+        print(f"\n❌ Errore durante l'elaborazione: {e}")
+
+
+def command_line_mode():
+    """Modalità da riga di comando del programma."""
     parser = argparse.ArgumentParser(
         description="Aggiunge un marchio a tutte le pagine di un file PDF"
     )
@@ -152,11 +219,16 @@ def main():
     
     parser.add_argument(
         "-w", "--watermark",
-        default="sign.png",
-        help="Percorso dell'immagine del marchio (default: sign.png)"
+        default="signAL.png",
+        help="Percorso dell'immagine del marchio (default: signAL.png)"
     )
     
     args = parser.parse_args()
+    
+    # Verifica se il file watermark di default esiste, altrimenti prova sign.png
+    if args.watermark == "signAL.png" and not os.path.exists(args.watermark):
+        if os.path.exists("sign.png"):
+            args.watermark = "sign.png"
     
     # Determina il percorso di output se non specificato
     if args.output is None:
@@ -175,6 +247,57 @@ def main():
     except Exception as e:
         print(f"Errore: {e}")
         return 1
+    
+    return 0
+
+
+def main():
+    """Funzione principale del programma."""
+    # Se vengono passati argomenti da riga di comando (escludendo il nome del programma)
+    if len(sys.argv) > 1:
+        # Modalità riga di comando
+        return command_line_mode()
+    else:
+        # Modalità interattiva
+        print("=== PDF Signer - Programma per aggiungere marchio ai PDF ===")
+        print("\nScegli la modalità:")
+        print("1. Modalità interattiva (guidata)")
+        print("2. Mostra aiuto per modalità riga di comando")
+        print("3. Esci")
+        
+        while True:
+            try:
+                choice = input("\nScegli un'opzione (1-3): ").strip()
+                
+                if choice == "1":
+                    interactive_mode()
+                    break
+                elif choice == "2":
+                    print("\n=== Modalità Riga di Comando ===")
+                    print("Usa il programma da terminale con questi parametri:")
+                    print(f"python {sys.argv[0]} <file_pdf> [opzioni]")
+                    print("\nOpzioni disponibili:")
+                    print("  -o, --output PATH     Percorso del file PDF di output")
+                    print("  -s, --scale FLOAT     Fattore di scala per il marchio (default: 1.0)")
+                    print("  -w, --watermark PATH  Percorso dell'immagine marchio (default: signAL.png)")
+                    print("  -h, --help           Mostra questo aiuto")
+                    print("\nEsempio d'uso:")
+                    print(f"python {sys.argv[0]} documento.pdf -s 0.3 -o documento_firmato.pdf")
+                    
+                    input("\nPremi Invio per continuare...")
+                    continue
+                elif choice == "3":
+                    print("Arrivederci!")
+                    break
+                else:
+                    print("Opzione non valida. Scegli 1, 2 o 3.")
+                    
+            except KeyboardInterrupt:
+                print("\n\nProgramma interrotto dall'utente.")
+                break
+            except EOFError:
+                print("\n\nProgramma terminato.")
+                break
     
     return 0
 
