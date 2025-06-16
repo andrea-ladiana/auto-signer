@@ -34,7 +34,7 @@ Questi script verificheranno automaticamente le dipendenze e avvieranno il progr
 Avvia il programma senza parametri per accedere al menu interattivo:
 
 ```bash
-python pdf_signer_unified.py
+python pdf_signer.py
 ```
 
 Il programma ti permetterà di scegliere tra:
@@ -44,7 +44,7 @@ Il programma ti permetterà di scegliere tra:
 ### Modalità da riga di comando
 
 ```bash
-python pdf_signer_unified.py percorso/del/file.pdf
+python pdf_signer.py percorso/del/file.pdf
 ```
 
 #### Opzioni disponibili:
@@ -57,16 +57,16 @@ python pdf_signer_unified.py percorso/del/file.pdf
 
 ```bash
 # Uso base (usa signAL.png come marchio, scala 1.0)
-python pdf_signer_unified.py documento.pdf
+python pdf_signer.py documento.pdf
 
 # Specifica il file di output
-python pdf_signer_unified.py documento.pdf -o documento_firmato.pdf
+python pdf_signer.py documento.pdf -o documento_firmato.pdf
 
 # Ridimensiona il marchio al 30%
-python pdf_signer_unified.py documento.pdf -s 0.3
+python pdf_signer.py documento.pdf -s 0.3
 
 # Usa un marchio diverso e scala personalizzata
-python pdf_signer_unified.py documento.pdf -w mio_marchio.png -s 0.8 -o output.pdf
+python pdf_signer.py documento.pdf -w mio_marchio.png -s 0.8 -o output.pdf
 ```
 
 ## File richiesti

@@ -51,7 +51,7 @@ Write-Host ""
 
 # Avvia il programma Python con eventuali parametri passati
 try {
-    python pdf_signer_unified.py $args
+    python pdf_signer.py $args
 } catch {
     Write-Host "❌ Errore durante l'esecuzione del programma" -ForegroundColor Red
 }

@@ -36,7 +36,7 @@ echo Avvio del programma...
 echo.
 
 REM Avvia il programma Python
-python pdf_signer_unified.py %*
+python pdf_signer.py %*
 
 echo.
 pause
