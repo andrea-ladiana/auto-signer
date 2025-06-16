@@ -9,6 +9,7 @@ Versione avanzata con supporto per pagine specifiche, formati multipli, effetti 
 
 import os
 import smtplib
+import ssl
 import json
 import yaml
 from email.mime.multipart import MIMEMultipart
@@ -1013,8 +1014,10 @@ def add_pdf_metadata(pdf_path: str, metadata: dict) -> None:
         print(f"Errore nell'aggiunta dei metadati: {e}")
 
 
-def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list, 
-                       subject: Optional[str] = None, body: Optional[str] = None, template_path: Optional[str] = None) -> bool:
+def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
+                       subject: Optional[str] = None, body: Optional[str] = None,
+                       template_path: Optional[str] = None,
+                       ssl_context: Optional[ssl.SSLContext] = None) -> bool:
     """
     Invia PDF firmato via email.
     
@@ -1025,6 +1028,7 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
         subject: Oggetto email
         body: Corpo email
         template_path: Percorso template email
+        ssl_context: Contesto SSL personalizzato
         
     Returns:
         True se invio riuscito
@@ -1079,10 +1083,15 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
         password = smtp_config.get('password')
         use_tls = smtp_config.get('use_tls', True)
         
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        
-        if use_tls:
-            server.starttls()
+        if not use_tls and smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl_context)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            if use_tls:
+                if ssl_context:
+                    server.starttls(context=ssl_context)
+                else:
+                    server.starttls()
         
         if username and password:
             server.login(username, password)
