@@ -637,8 +637,6 @@ Formati immagine supportati: PNG, JPG, JPEG, GIF (SVG con modulo avanzato)
         args.output = str(input_path.parent / output_name)
     
     try:
-        # Prepara parametri avanzati    try:
-        # Prepara parametri avanzati
         kwargs = {}
         
         # Pagine
