@@ -1013,8 +1013,9 @@ def add_pdf_metadata(pdf_path: str, metadata: dict) -> None:
         print(f"Errore nell'aggiunta dei metadati: {e}")
 
 
-def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list, 
-                       subject: Optional[str] = None, body: Optional[str] = None, template_path: Optional[str] = None) -> bool:
+def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
+                       subject: Optional[str] = None, body: Optional[str] = None,
+                       template_path: Optional[str] = None) -> bool:
     """
     Invia PDF firmato via email.
     
@@ -1030,20 +1031,34 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
         True se invio riuscito
     """
     try:
+        attachments = []
         # Carica template se specificato
         if template_path and os.path.exists(template_path):
-            with open(template_path, 'r', encoding='utf-8') as f:
-                template_content = f.read()
-                body = template_content.format(
-                    pdf_name=Path(pdf_path).name,
-                    timestamp=datetime.now().strftime("%d/%m/%Y %H:%M")
-                )
+            if template_path.endswith(('.yaml', '.yml')):
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    template_data = yaml.safe_load(f) or {}
+                subject = template_data.get('subject', subject)
+                body = template_data.get('body', body)
+                attachments = template_data.get('additional_attachments', [])
+            else:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    template_content = f.read()
+                body = template_content
         
         if not subject:
             subject = f"PDF Firmato: {Path(pdf_path).name}"
-        
+
         if not body:
             body = f"In allegato il PDF firmato: {Path(pdf_path).name}"
+
+        context = {
+            'filename': Path(pdf_path).name,
+            'pdf_name': Path(pdf_path).name,
+            'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M")
+        }
+
+        subject = subject.format(**context)
+        body = body.format(**context)
           # Crea messaggio email
         msg = MIMEMultipart()
         
@@ -1070,6 +1085,19 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
                     f'attachment; filename= {Path(pdf_path).name}'
                 )
                 msg.attach(part)
+
+        # Aggiungi eventuali allegati extra dal template
+        for attach_path in attachments:
+            if os.path.exists(attach_path):
+                with open(attach_path, 'rb') as extra_file:
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(extra_file.read())
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename= {Path(attach_path).name}'
+                    )
+                    msg.attach(part)
         
         # Connetti al server e invia - gestisci diverse strutture config
         smtp_config = email_config.get('smtp', email_config)
