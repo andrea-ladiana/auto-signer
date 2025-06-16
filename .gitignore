@@ -1,5 +1,6 @@
-# Ignore signature image file
+# Ignore signature image files
 signAL.png
+create_placeholder.py
 
 # Python cache files
 __pycache__/

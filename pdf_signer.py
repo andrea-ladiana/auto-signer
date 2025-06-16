@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 
-def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None):
+def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, position="bottom-right"):
     """
     Crea un PDF temporaneo contenente solo il marchio (watermark).
     
@@ -25,6 +25,7 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None):
         image_path (str): Percorso dell'immagine del marchio
         scale_factor (float): Fattore di scala per ridimensionare il marchio
         output_path (str): Percorso del file PDF temporaneo (opzionale)
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
     
     Returns:
         str: Percorso del file PDF temporaneo creato
@@ -41,8 +42,7 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None):
             img_width, img_height = img.size
     except Exception as e:
         raise ValueError(f"Errore nell'aprire l'immagine {image_path}: {e}")
-    
-    # Applica il fattore di scala
+      # Applica il fattore di scala
     img_width *= scale_factor
     img_height *= scale_factor
     
@@ -50,15 +50,31 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None):
     c = canvas.Canvas(output_path, pagesize=letter)
     page_width, page_height = letter
     
-    # Posiziona l'immagine in fondo a destra
+    # Calcola la posizione dell'immagine in base al parametro position
     # Lascia un margine di 20 punti dai bordi
     margin = 20
-    x_position = page_width - img_width - margin
-    y_position = margin
+    
+    # Definisce le posizioni disponibili
+    positions = {
+        "bottom-right": (page_width - img_width - margin, margin),
+        "bottom-left": (margin, margin),
+        "top-right": (page_width - img_width - margin, page_height - img_height - margin),
+        "top-left": (margin, page_height - img_height - margin)
+    }
+    
+    # Verifica che la posizione sia valida
+    if position not in positions:
+        raise ValueError(f"Posizione non valida: {position}. Posizioni disponibili: {', '.join(positions.keys())}")
+    
+    x_position, y_position = positions[position]
     
     # Assicurati che l'immagine non esca dai bordi della pagina
     if x_position < 0:
         x_position = margin
+    if x_position + img_width > page_width:
+        x_position = page_width - img_width - margin
+    if y_position < 0:
+        y_position = margin
     if y_position + img_height > page_height:
         y_position = page_height - img_height - margin
     
@@ -69,7 +85,7 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None):
     return output_path
 
 
-def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path, scale_factor=1.0):
+def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path, scale_factor=1.0, position="bottom-right"):
     """
     Aggiunge un marchio a tutte le pagine di un file PDF.
     
@@ -78,6 +94,7 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path, 
         watermark_image_path (str): Percorso dell'immagine del marchio
         output_pdf_path (str): Percorso del file PDF di output
         scale_factor (float): Fattore di scala per il marchio (default: 1.0)
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
     """
     # Verifica che i file esistano
     if not os.path.exists(input_pdf_path):
@@ -85,10 +102,10 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path, 
     
     if not os.path.exists(watermark_image_path):
         raise FileNotFoundError(f"Immagine marchio non trovata: {watermark_image_path}")
-    
-    # Crea il PDF temporaneo con il marchio
+      # Crea il PDF temporaneo con il marchio
     print(f"Creazione del marchio con fattore di scala: {scale_factor}")
-    watermark_pdf_path = create_watermark_pdf(watermark_image_path, scale_factor)
+    print(f"Posizione del marchio: {position}")
+    watermark_pdf_path = create_watermark_pdf(watermark_image_path, scale_factor, position=position)
     
     try:
         # Leggi il PDF originale
@@ -141,8 +158,7 @@ def interactive_mode():
             break
         else:
             print("File non trovato o non è un PDF. Riprova.")
-    
-    # Input del fattore di scala
+      # Input del fattore di scala
     while True:
         try:
             scale_input = input("Inserisci il fattore di scala per il marchio (default 0.2): ").strip()
@@ -157,13 +173,34 @@ def interactive_mode():
         except ValueError:
             print("Inserisci un numero valido.")
     
+    # Input della posizione del marchio
+    print("\nPosizioni disponibili per il marchio:")
+    print("1. Basso a destra (default)")
+    print("2. Basso a sinistra")
+    print("3. Alto a destra")
+    print("4. Alto a sinistra")
+    
+    position_map = {
+        "1": "bottom-right",
+        "2": "bottom-left", 
+        "3": "top-right",
+        "4": "top-left",
+        "": "bottom-right"  # default
+    }
+    
+    while True:
+        position_input = input("Scegli la posizione (1-4, default 1): ").strip()
+        if position_input in position_map:
+            position = position_map[position_input]
+            break
+        else:
+            print("Scelta non valida. Inserisci un numero da 1 a 4.")
+    
     # Percorso dell'immagine marchio
     watermark_path = "sign.png"
     if not os.path.exists(watermark_path):
         print(f"Attenzione: Nessun file marchio trovato (sign.png).")
-        watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')
-
-    # Input del percorso di output (opzionale)
+        watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')    # Input del percorso di output (opzionale)
     output_input = input("Inserisci il percorso di output (lascia vuoto per generarlo automaticamente): ").strip().strip('"')
     
     if output_input:
@@ -177,6 +214,7 @@ def interactive_mode():
     print(f"PDF di input: {pdf_path}")
     print(f"Marchio: {watermark_path}")
     print(f"Fattore di scala: {scale_factor}")
+    print(f"Posizione: {position}")
     print(f"PDF di output: {output_path}")
     
     confirm = input("\nProcedere con l'elaborazione? (s/n): ").strip().lower()
@@ -185,7 +223,7 @@ def interactive_mode():
         return
     
     try:
-        add_watermark_to_pdf(pdf_path, watermark_path, output_path, scale_factor)
+        add_watermark_to_pdf(pdf_path, watermark_path, output_path, scale_factor, position)
         print(f"\n✅ Successo! PDF firmato salvato in: {output_path}")
         
     except Exception as e:
@@ -202,7 +240,6 @@ def command_line_mode():
         "input_pdf",
         help="Percorso del file PDF di input"
     )
-    
     parser.add_argument(
         "-o", "--output",
         help="Percorso del file PDF di output (default: aggiunge '_signed' al nome originale)"
@@ -221,14 +258,20 @@ def command_line_mode():
         help="Percorso dell'immagine del marchio (default: sign.png)"
     )
     
+    parser.add_argument(
+        "-p", "--position",
+        choices=["bottom-right", "bottom-left", "top-right", "top-left"],
+        default="bottom-right",
+        help="Posizione del marchio (default: bottom-right)"
+    )
+    
     args = parser.parse_args()
     
     # Verifica se il file watermark di default esiste, altrimenti prova sign.png
     if args.watermark == "sign.png" and not os.path.exists(args.watermark):
         if os.path.exists("sign.png"):
             args.watermark = "sign.png"
-    
-    # Determina il percorso di output se non specificato
+      # Determina il percorso di output se non specificato
     if args.output is None:
         input_path = Path(args.input_pdf)
         output_name = input_path.stem + "_signed" + input_path.suffix
@@ -239,7 +282,8 @@ def command_line_mode():
             args.input_pdf,
             args.watermark,
             args.output,
-            args.scale
+            args.scale,
+            args.position
         )
         
     except Exception as e:
@@ -270,7 +314,7 @@ def main():
                 if choice == "1":
                     interactive_mode()
                     break
-                elif choice == "2":
+                elif choice == "2":                    
                     print("\n=== Modalità Riga di Comando ===")
                     print("Usa il programma da terminale con questi parametri:")
                     print(f"python {sys.argv[0]} <file_pdf> [opzioni]")
@@ -278,9 +322,10 @@ def main():
                     print("  -o, --output PATH     Percorso del file PDF di output")
                     print("  -s, --scale FLOAT     Fattore di scala per il marchio (default: 1.0)")
                     print("  -w, --watermark PATH  Percorso dell'immagine marchio (default: sign.png)")
+                    print("  -p, --position POS    Posizione del marchio: bottom-right, bottom-left, top-right, top-left (default: bottom-right)")
                     print("  -h, --help           Mostra questo aiuto")
                     print("\nEsempio d'uso:")
-                    print(f"python {sys.argv[0]} documento.pdf -s 0.3 -o documento_firmato.pdf")
+                    print(f"python {sys.argv[0]} documento.pdf -s 0.3 -p top-left -o documento_firmato.pdf")
                     
                     input("\nPremi Invio per continuare...")
                     continue
