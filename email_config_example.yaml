@@ -1,6 +1,9 @@
 # Configurazione Email per PDF Signer
 # Copia questo file e rinominalo in email_config.yaml
 # Inserisci le tue credenziali SMTP
+# ATTENZIONE: non salvare qui password reali se il repository viene condiviso
+# È consigliabile usare variabili d'ambiente (es. SMTP_PASS) o un file di
+# configurazione fuori dal repository
 
 smtp_server: smtp.gmail.com
 smtp_port: 587
