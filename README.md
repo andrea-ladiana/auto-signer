@@ -56,7 +56,7 @@ python pdf_signer.py percorso/del/file.pdf
 #### Esempi:
 
 ```bash
-# Uso base (usa signAL.png come marchio, scala 1.0)
+# Uso base (usa sign.png come marchio, scala 1.0)
 python pdf_signer.py documento.pdf
 
 # Specifica il file di output
@@ -71,7 +71,7 @@ python pdf_signer.py documento.pdf -w mio_marchio.png -s 0.8 -o output.pdf
 
 ## File richiesti
 
-- `signAL.png` (o `sign.png`): L'immagine del marchio (deve essere nella stessa directory dello script, o specificare il percorso)
+- `sign.png`: L'immagine del marchio (deve essere nella stessa directory dello script, o specificare il percorso)
 - Il file PDF da modificare
 
 ## Formati supportati
@@ -82,7 +82,7 @@ python pdf_signer.py documento.pdf -w mio_marchio.png -s 0.8 -o output.pdf
 ## Caratteristiche
 
 - **Doppia modalità**: Interfaccia interattiva guidata o uso da riga di comando
-- **Auto-rilevamento marchio**: Cerca automaticamente `signAL.png` o `sign.png`
+- **Auto-rilevamento marchio**: Cerca automaticamente `sign.png`
 - **Posizionamento intelligente**: Il marchio viene posizionato in fondo a destra
 - **Gestione margini**: Mantiene automaticamente un margine di 20 punti dai bordi
 - **Ridimensionamento automatico**: Previene che il marchio esca dai bordi della pagina

@@ -158,13 +158,11 @@ def interactive_mode():
             print("Inserisci un numero valido.")
     
     # Percorso dell'immagine marchio
-    watermark_path = "signAL.png"
+    watermark_path = "sign.png"
     if not os.path.exists(watermark_path):
-        watermark_path = "sign.png"
-        if not os.path.exists(watermark_path):
-            print(f"Attenzione: Nessun file marchio trovato (signAL.png o sign.png).")
-            watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')
-    
+        print(f"Attenzione: Nessun file marchio trovato (sign.png).")
+        watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')
+
     # Input del percorso di output (opzionale)
     output_input = input("Inserisci il percorso di output (lascia vuoto per generarlo automaticamente): ").strip().strip('"')
     
@@ -219,14 +217,14 @@ def command_line_mode():
     
     parser.add_argument(
         "-w", "--watermark",
-        default="signAL.png",
-        help="Percorso dell'immagine del marchio (default: signAL.png)"
+        default="sign.png",
+        help="Percorso dell'immagine del marchio (default: sign.png)"
     )
     
     args = parser.parse_args()
     
     # Verifica se il file watermark di default esiste, altrimenti prova sign.png
-    if args.watermark == "signAL.png" and not os.path.exists(args.watermark):
+    if args.watermark == "sign.png" and not os.path.exists(args.watermark):
         if os.path.exists("sign.png"):
             args.watermark = "sign.png"
     
@@ -279,7 +277,7 @@ def main():
                     print("\nOpzioni disponibili:")
                     print("  -o, --output PATH     Percorso del file PDF di output")
                     print("  -s, --scale FLOAT     Fattore di scala per il marchio (default: 1.0)")
-                    print("  -w, --watermark PATH  Percorso dell'immagine marchio (default: signAL.png)")
+                    print("  -w, --watermark PATH  Percorso dell'immagine marchio (default: sign.png)")
                     print("  -h, --help           Mostra questo aiuto")
                     print("\nEsempio d'uso:")
                     print(f"python {sys.argv[0]} documento.pdf -s 0.3 -o documento_firmato.pdf")
