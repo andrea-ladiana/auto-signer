@@ -1,0 +1,16 @@
+# Configurazione predefinita per PDF Signer GUI
+# Questo file viene creato automaticamente nella directory utente
+
+last_watermark_path: 'sign.png'
+last_output_dir: '~/Documents'
+default_scale: 0.2
+default_position: 'bottom-right'
+default_opacity: 0.8
+window_geometry: '1200x800'
+preview_quality: 'medium'
+
+# Altre impostazioni disponibili:
+# auto_update_preview: true
+# remember_window_position: true
+# backup_original_files: false
+# default_output_suffix: '_signed'

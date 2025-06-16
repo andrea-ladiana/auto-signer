@@ -1,105 +1,329 @@
-# PDF Signer - Programma per aggiungere marchi ai PDF
+# PDF Signer - Programma Avanzato per Firma Digitale PDF
 
-Questo programma permette di aggiungere un marchio (watermark) a tutte le pagine di un file PDF. Il marchio viene posizionato in fondo a destra di ogni pagina.
+Programma completo per aggiungere firme digitali e watermark ai documenti PDF con interfaccia grafica avanzata e modalità riga di comando.
 
-## Installazione
+## ✨ Caratteristiche Principali
 
-1. Assicurati di avere Python 3.6 o superiore installato
-2. Installa le dipendenze richieste:
+### 🖥️ **Interfaccia Grafica Completa (NEW!)**
+- **Drag & Drop**: Trascina PDF e immagini direttamente nell'applicazione
+- **Anteprima in tempo reale**: Visualizza il risultato prima di salvare
+- **Editor visuale**: Trascina la firma per riposizionarla interattivamente
+- **Profili personaliz​zabili**: Salva e carica configurazioni predefinite
+- **Gestione avanzata**: Configurazioni YAML/JSON per utenti esperti
 
-```bash
-pip install -r requirements.txt
+### 📝 **Modalità Riga di Comando**
+- Automazione e scripting
+- Elaborazione batch
+- Integrazione con altri sistemi
+- Tutte le funzionalità disponibili via CLI
+
+### 🎯 **Funzionalità Avanzate**
+- **4 posizioni predefinite**: angoli del documento
+- **Posizionamento personalizzato**: coordinate precise
+- **Controllo opacità**: da trasparente a completamente opaco
+- **Ridimensionamento**: scala personalizzabile
+- **Supporto formati**: PNG, JPG, JPEG, GIF, BMP
+- **Anteprima PDF**: visualizzazione con PyMuPDF per qualità ottimale
+
+## 🚀 Installazione e Avvio
+
+### Avvio Rapido GUI (Raccomandato)
+
+**Windows - Command Prompt:**
+```cmd
+start_gui.bat
 ```
 
-## Avvio rapido (Windows)
+**Windows - PowerShell:**
+```powershell
+.\start_gui.ps1
+```
 
-Per un avvio semplificato, usa uno dei file di avvio:
+**Manuale:**
+```bash
+pip install -r requirements.txt
+pip install PyMuPDF tkinterdnd2
+python pdf_signer_gui.py
+```
 
-**Command Prompt / Batch:**
+### Avvio Modalità Riga di Comando
+
+**Windows:**
 ```cmd
 start.bat
 ```
 
-**PowerShell:**
-```powershell
-.\start.ps1
+**Manuale:**
+```bash
+python pdf_signer.py
 ```
 
-Questi script verificheranno automaticamente le dipendenze e avvieranno il programma in modalità interattiva.
+## 🎮 Utilizzo GUI
 
-## Utilizzo
+### Funzionalità Principali
 
-### Modalità interattiva (raccomandata)
+1. **📁 Gestione File**
+   - Trascina PDF e immagini firma direttamente nell'interfaccia
+   - Browse per selezionare file manualmente
+   - Percorso output generato automaticamente
 
-Avvia il programma senza parametri per accedere al menu interattivo:
+2. **👀 Anteprima Interattiva**
+   - Visualizzazione PDF in tempo reale
+   - Trascinamento firma per riposizionamento
+   - Navigazione tra pagine
+   - Zoom e adattamento automatico
+
+3. **⚙️ Controlli Avanzati**
+   - **Dimensione**: Slider per ridimensionamento (0.05x - 1.0x)
+   - **Posizione**: 4 angoli predefiniti + posizionamento custom
+   - **Opacità**: Da trasparente (0.1) a completamente opaco (1.0)
+   - **Anteprima firma**: Miniatura dell'immagine caricata
+
+4. **📊 Sistema Profili**
+   - **Salva profili**: Configurazioni personalizzate con nome e descrizione
+   - **Carica profili**: Un click per applicare impostazioni salvate
+   - **Gestione avanzata**: Dialog dedicato per organizzare profili
+   - **Profili predefiniti**: Configurazioni pronte all'uso
+
+### Profili Inclusi
+
+- **🖊️ Firma Standard**: Classica firma in basso a destra
+- **📄 Firma Piccola**: Discreta e compatta  
+- **🏛️ Firma Ufficiale**: Grande per documenti formali
+- **📍 Firma Alto Sinistra**: Posizionamento alternativo
+- **💧 Watermark Trasparente**: Marchio di filigrana
+
+### Drag & Drop
+
+L'interfaccia supporta completamente il trascinamento:
+
+- **📑 PDF**: Trascina file PDF nell'area "PDF"
+- **🖼️ Immagini**: Trascina PNG/JPG nell'area "Firma"  
+- **🎯 Posizionamento**: Trascina la firma nell'anteprima per riposizionarla
+
+## 📱 Utilizzo Modalità Interattiva (CLI)
+
+### Menu Principale
 
 ```bash
 python pdf_signer.py
 ```
 
-Il programma ti permetterà di scegliere tra:
-1. **Modalità guidata**: Ti guida passo passo nell'inserimento dei parametri
-2. **Aiuto riga di comando**: Mostra le opzioni disponibili per l'uso da terminale
+Il programma presenta 3 opzioni:
+1. **Modalità guidata**: Procedura step-by-step
+2. **Aiuto riga di comando**: Documentazione parametri CLI
+3. **Esci**: Chiude l'applicazione
 
-### Modalità da riga di comando
+### Processo Guidato
+
+1. **Seleziona PDF**: Inserisci percorso o trascina file
+2. **Imposta scala**: Fattore ridimensionamento (default: 0.2)
+3. **Scegli posizione**: Menu numerato per gli angoli
+4. **Configura output**: Percorso generato automaticamente o personalizzato
+5. **Conferma ed elabora**: Revisione finale e processing
+
+## ⌨️ Utilizzo Riga di Comando
+
+### Sintassi Base
 
 ```bash
-python pdf_signer.py percorso/del/file.pdf
+python pdf_signer.py <input.pdf> [opzioni]
 ```
 
-#### Opzioni disponibili:
+### Parametri Disponibili
 
-- `-o, --output`: Specifica il percorso del file PDF di output (default: aggiunge "_signed" al nome originale)
-- `-s, --scale`: Fattore di scala per il marchio (default: 1.0)
-- `-w, --watermark`: Percorso dell'immagine del marchio (default: signAL.png)
+| Parametro | Descrizione | Default |
+|-----------|-------------|---------|
+| `input_pdf` | File PDF da firmare | *richiesto* |
+| `-o, --output` | File PDF output | `input_signed.pdf` |
+| `-s, --scale` | Fattore scala (0.05-1.0) | `1.0` |
+| `-w, --watermark` | Immagine firma | `sign.png` |
+| `-p, --position` | Posizione firma | `bottom-right` |
+| `-h, --help` | Mostra aiuto | - |
 
-#### Esempi:
+### Posizioni Disponibili
 
+- `bottom-right` ← Default
+- `bottom-left`
+- `top-right`  
+- `top-left`
+
+### Esempi Pratici
+
+**Firma standard:**
 ```bash
-# Uso base (usa sign.png come marchio, scala 1.0)
 python pdf_signer.py documento.pdf
-
-# Specifica il file di output
-python pdf_signer.py documento.pdf -o documento_firmato.pdf
-
-# Ridimensiona il marchio al 30%
-python pdf_signer.py documento.pdf -s 0.3
-
-# Usa un marchio diverso e scala personalizzata
-python pdf_signer.py documento.pdf -w mio_marchio.png -s 0.8 -o output.pdf
 ```
 
-## File richiesti
+**Firma personalizzata:**
+```bash
+python pdf_signer.py contratto.pdf -s 0.3 -p top-left -o contratto_firmato.pdf
+```
 
-- `sign.png`: L'immagine del marchio (deve essere nella stessa directory dello script, o specificare il percorso)
-- Il file PDF da modificare
+**Con watermark custom:**
+```bash
+python pdf_signer.py report.pdf -w mia_firma.png -s 0.15 -p bottom-left
+```
 
-## Formati supportati
+## ⚙️ Configurazione Avanzata
 
-- **Immagini marchio**: PNG, JPG, JPEG, GIF, BMP
-- **PDF**: Tutti i PDF standard
+### File di Configurazione
 
-## Caratteristiche
+La GUI crea automaticamente file di configurazione in:
+- **Windows**: `%USERPROFILE%\.pdf_signer\`
+- **Linux/Mac**: `~/.pdf_signer/`
 
-- **Doppia modalità**: Interfaccia interattiva guidata o uso da riga di comando
-- **Auto-rilevamento marchio**: Cerca automaticamente `sign.png`
-- **Posizionamento intelligente**: Il marchio viene posizionato in fondo a destra
-- **Gestione margini**: Mantiene automaticamente un margine di 20 punti dai bordi
-- **Ridimensionamento automatico**: Previene che il marchio esca dai bordi della pagina
-- **File sicuro**: Il file originale non viene mai modificato
+**Struttura directory:**
+```
+.pdf_signer/
+├── config.yaml          # Configurazione generale
+└── profiles.json        # Profili salvati
+```
 
-## Note
+### Personalizzazione config.yaml
 
-- Il marchio viene posizionato in fondo a destra di ogni pagina
-- Il programma mantiene un margine di 20 punti dai bordi della pagina
-- Se il marchio è troppo grande, viene automaticamente riposizionato per rimanere all'interno della pagina
-- Il file originale non viene modificato, viene creato un nuovo file
-- In modalità interattiva, il fattore di scala di default è 0.2 (20% della dimensione originale)
-- In modalità riga di comando, il fattore di scala di default è 1.0 (dimensione originale)
+```yaml
+last_watermark_path: 'path/to/signature.png'
+last_output_dir: '~/Documents/Signed'
+default_scale: 0.2
+default_position: 'bottom-right'
+default_opacity: 0.8
+window_geometry: '1200x800'
+preview_quality: 'high'
+```
 
-## Risoluzione problemi
+### Gestione Profili JSON
 
-1. **Errore "File non trovato"**: Verifica che i percorsi dei file siano corretti
-2. **Errore di memoria con PDF grandi**: Prova a ridurre il fattore di scala del marchio
-3. **Marchio non visibile**: Aumenta il fattore di scala o verifica che l'immagine non sia troppo piccola
-4. **Errore dipendenze**: Usa `start.bat` su Windows per l'installazione automatica
+```json
+{
+  "Mio Profilo Custom": {
+    "scale": 0.25,
+    "position": "top-right",
+    "opacity": 0.9,
+    "watermark_path": "signatures/official.png",
+    "description": "Firma ufficiale aziendale"
+  }
+}
+```
+
+## 🔧 Dipendenze
+
+### Core (CLI)
+- `PyPDF2` - Manipolazione PDF
+- `Pillow` - Elaborazione immagini
+- `reportlab` - Generazione PDF
+
+### GUI Aggiuntive
+- `PyMuPDF` - Anteprima PDF ad alta qualità
+- `tkinterdnd2` - Drag & Drop
+- `pyyaml` - Configurazioni YAML
+
+### Installazione Completa
+
+```bash
+pip install -r requirements.txt
+pip install PyMuPDF==1.23.0 tkinterdnd2==0.3.0 pyyaml==6.0.1
+```
+
+## 🏗️ Struttura Progetto
+
+```
+auto-signer/
+├── pdf_signer.py          # Modulo core + CLI
+├── pdf_signer_gui.py      # Interfaccia grafica completa
+├── requirements.txt       # Dipendenze base
+├── start.bat             # Avvio CLI Windows
+├── start.ps1            # Avvio CLI PowerShell  
+├── start_gui.bat        # Avvio GUI Windows
+├── start_gui.ps1        # Avvio GUI PowerShell
+├── config_example.yaml  # Esempio configurazione
+├── profiles_example.json # Esempi profili
+├── sign.png             # Firma predefinita
+├── signAL.png          # Firma alternativa
+└── README.md           # Documentazione
+```
+
+## 🎯 Casi d'Uso
+
+### 👔 Professionali
+- **Contratti**: Firma automatica su documenti legali
+- **Fatture**: Watermark aziendale su documenti contabili
+- **Report**: Marchio di autenticità su relazioni
+- **Certificati**: Timbro ufficiale su attestati
+
+### 🏠 Personali  
+- **Documenti**: Firma su PDF personali
+- **CV**: Watermark di autenticità
+- **Ricevute**: Marchio personale
+- **Backup**: Firma automatica per archiviazione
+
+### 🤖 Automazione
+- **Batch processing**: Script per multiple firme
+- **Workflow**: Integrazione in pipeline documentali
+- **Server**: API per firma automatizzata
+- **Monitoraggio**: Watch folder per auto-firma
+
+## 🆘 Risoluzione Problemi
+
+### Errori Comuni
+
+**🚫 Import Error tkinterdnd2**
+```bash
+pip install tkinterdnd2==0.3.0
+```
+
+**🚫 Import Error fitz (PyMuPDF)**
+```bash
+pip install PyMuPDF==1.23.0
+```
+
+**🚫 File non trovato**
+- Verifica path assoluti per file PDF e immagini
+- Controlla permessi di lettura/scrittura
+
+**🚫 Anteprima non funziona**
+- Assicurati che PyMuPDF sia installato correttamente
+- Prova con PDF più semplici
+
+### Performance
+
+**🐌 Anteprima lenta**
+- Riduci qualità anteprima in `config.yaml`: `preview_quality: 'low'`
+- Usa PDF con meno pagine per test
+
+**💾 Memoria elevata**
+- Chiudi anteprime non utilizzate
+- Riduci dimensione immagini firma
+
+## 📞 Supporto
+
+Per problemi, suggerimenti o richieste di funzionalità:
+
+1. **Issues**: Usa GitHub Issues per bug report
+2. **Documentazione**: Consulta questo README
+3. **Esempi**: Vedi file di esempio inclusi
+
+## 🔄 Changelog
+
+### v2.0 - GUI Completa
+- ✅ Interfaccia grafica drag-and-drop
+- ✅ Anteprima interattiva in tempo reale  
+- ✅ Sistema profili con salvataggio
+- ✅ Configurazione YAML/JSON
+- ✅ Posizionamento visuale trascinando
+- ✅ Gestione avanzata profili
+
+### v1.0 - Base CLI
+- ✅ Modalità riga di comando
+- ✅ Modalità interattiva guidata
+- ✅ 4 posizioni predefinite
+- ✅ Controllo scala e opacità
+- ✅ Supporto multipli formati immagine
+
+## 📄 Licenza
+
+Questo progetto è distribuito sotto licenza MIT. Vedi file LICENSE per dettagli.
+
+---
+
+**PDF Signer v2.0** - *Firma Digitale Avanzata per PDF* 🖊️

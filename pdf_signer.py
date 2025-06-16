@@ -49,24 +49,35 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
     # Crea un PDF con l'immagine
     c = canvas.Canvas(output_path, pagesize=letter)
     page_width, page_height = letter
-    
-    # Calcola la posizione dell'immagine in base al parametro position
+      # Calcola la posizione dell'immagine in base al parametro position
     # Lascia un margine di 20 punti dai bordi
     margin = 20
     
-    # Definisce le posizioni disponibili
-    positions = {
-        "bottom-right": (page_width - img_width - margin, margin),
-        "bottom-left": (margin, margin),
-        "top-right": (page_width - img_width - margin, page_height - img_height - margin),
-        "top-left": (margin, page_height - img_height - margin)
-    }
-    
-    # Verifica che la posizione sia valida
-    if position not in positions:
-        raise ValueError(f"Posizione non valida: {position}. Posizioni disponibili: {', '.join(positions.keys())}")
-    
-    x_position, y_position = positions[position]
+    # Gestisce posizioni personalizzate dal formato "custom:x,y" (coordinate relative 0-1)
+    if position.startswith("custom:"):
+        try:
+            coords = position.split(":")[1].split(",")
+            rel_x, rel_y = float(coords[0]), float(coords[1])
+            x_position = rel_x * page_width
+            y_position = rel_y * page_height
+        except:
+            # Fallback a bottom-right se formato non valido
+            x_position = page_width - img_width - margin
+            y_position = margin
+    else:
+        # Definisce le posizioni predefinite disponibili
+        positions = {
+            "bottom-right": (page_width - img_width - margin, margin),
+            "bottom-left": (margin, margin),
+            "top-right": (page_width - img_width - margin, page_height - img_height - margin),
+            "top-left": (margin, page_height - img_height - margin)
+        }
+        
+        # Verifica che la posizione sia valida
+        if position not in positions:
+            raise ValueError(f"Posizione non valida: {position}. Posizioni disponibili: {', '.join(positions.keys())}")
+        
+        x_position, y_position = positions[position]
     
     # Assicurati che l'immagine non esca dai bordi della pagina
     if x_position < 0:
