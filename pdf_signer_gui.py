@@ -7,7 +7,11 @@ editor visuale per posizionamento e gestione profili.
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, colorchooser, simpledialog
 import tkinter.font as tkFont
-from tkinterdnd2 import DND_FILES, TkinterDnD
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+except ImportError:  # Gestito in main()
+    DND_FILES = None
+    TkinterDnD = None
 import json
 import yaml
 import os
@@ -17,7 +21,10 @@ import threading
 import queue
 from datetime import datetime
 import tempfile
-import fitz  # PyMuPDF per anteprima PDF
+try:
+    import fitz  # PyMuPDF per anteprima PDF
+except ImportError:  # Gestito in main()
+    fitz = None
 import subprocess
 import sys
 
@@ -1957,17 +1964,21 @@ def main():
         # Prova a importare PyMuPDF
         import fitz
     except ImportError:
-        print("Installazione di PyMuPDF in corso...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyMuPDF"])
-        import fitz
+        print(
+            "Dipendenza mancante: PyMuPDF. "
+            "Installa manualmente con 'pip install PyMuPDF'."
+        )
+        return
     
     try:
         # Prova a importare tkinterdnd2
         from tkinterdnd2 import TkinterDnD
     except ImportError:
-        print("Installazione di tkinterdnd2 in corso...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "tkinterdnd2"])
-        from tkinterdnd2 import TkinterDnD
+        print(
+            "Dipendenza mancante: tkinterdnd2. "
+            "Installa manualmente con 'pip install tkinterdnd2'."
+        )
+        return
     
     # Crea l'applicazione
     root = TkinterDnD.Tk()

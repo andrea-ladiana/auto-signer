@@ -49,6 +49,13 @@ pip install -r requirements.txt
 
 ### 🏃‍♂️ Avvio Immediato
 
+Se all'avvio vengono segnalate dipendenze mancanti, installa manualmente
+`PyMuPDF` e `tkinterdnd2`:
+
+```bash
+pip install PyMuPDF tkinterdnd2
+```
+
 
 ## 🖥️ Interfaccia Grafica v2.0
 
