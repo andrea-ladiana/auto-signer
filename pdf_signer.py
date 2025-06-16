@@ -1359,5 +1359,9 @@ def calculate_watermark_size_points(image_path, scale_factor, dpi=300):
     # Applica il fattore di scala
     final_width_points = base_width_points * scale_factor
     final_height_points = base_height_points * scale_factor
-    
+
     return final_width_points, final_height_points, img_width_px, img_height_px
+
+
+if __name__ == "__main__":
+    main()
