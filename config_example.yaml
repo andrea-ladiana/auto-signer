@@ -8,6 +8,7 @@ default_position: 'bottom-right'
 default_opacity: 0.8
 window_geometry: '1200x800'
 preview_quality: 'medium'
+benchmark_preview: false
 
 # Altre impostazioni disponibili:
 # auto_update_preview: true
