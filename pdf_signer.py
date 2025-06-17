@@ -30,7 +30,14 @@ from typing import List, Dict, Tuple, Optional
 # Tutte le funzionalità avanzate sono ora integrate direttamente
 
 
-def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, position="bottom-right"):
+def create_watermark_pdf(
+    image_path,
+    scale_factor=1.0,
+    output_path=None,
+    position="bottom-right",
+    page_size=None,
+    original_pdf_path=None,
+):
     """
     Crea un PDF temporaneo contenente solo il marchio (watermark).
     
@@ -38,8 +45,10 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
         image_path (str): Percorso dell'immagine del marchio
         scale_factor (float): Fattore di scala per ridimensionare il marchio
         output_path (str): Percorso del file PDF temporaneo (opzionale)
-        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
-    
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left", "center")
+        page_size (tuple): Dimensioni pagina (larghezza, altezza) in punti.
+        original_pdf_path (str): PDF da cui ricavare la dimensione pagina se page_size non 
+            è fornito.    
     Returns:
         str: Percorso del file PDF temporaneo creato
     """
@@ -51,8 +60,23 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
     img_width, img_height, _, _ = calculate_watermark_size_points(image_path, scale_factor)
     
     # Crea un PDF con l'immagine
-    c = canvas.Canvas(output_path, pagesize=letter)
-    page_width, page_height = letter
+    # Determina dimensioni pagina
+    if page_size is None and original_pdf_path:
+        try:
+            with open(original_pdf_path, "rb") as f:
+                reader = PdfReader(f)
+                first_page = reader.pages[0]
+                page_width = float(first_page.mediabox.width)
+                page_height = float(first_page.mediabox.height)
+                page_size = (page_width, page_height)
+        except Exception:
+            page_size = letter
+    if page_size is None:
+        page_size = letter
+    page_width, page_height = page_size
+
+    # Crea un PDF con l'immagine
+    c = canvas.Canvas(output_path, pagesize=page_size)
       # Calcola la posizione dell'immagine in base al parametro position
     # Lascia un margine di 20 punti dai bordi
     margin = 20
@@ -74,7 +98,8 @@ def create_watermark_pdf(image_path, scale_factor=1.0, output_path=None, positio
             "bottom-right": (page_width - img_width - margin, margin),
             "bottom-left": (margin, margin),
             "top-right": (page_width - img_width - margin, page_height - img_height - margin),
-            "top-left": (margin, page_height - img_height - margin)
+            "top-left": (margin, page_height - img_height - margin),
+            "center": ((page_width - img_width) / 2, (page_height - img_height) / 2)
         }
         
         # Verifica che la posizione sia valida
@@ -111,7 +136,7 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path,
         watermark_image_path (str): Percorso dell'immagine del marchio
         output_pdf_path (str): Percorso del file PDF di output
         scale_factor (float): Fattore di scala per il marchio (default: 1.0)
-        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left")
+        position (str): Posizione del marchio ("bottom-right", "bottom-left", "top-right", "top-left", "center")
         **kwargs: Parametri avanzati (pages, opacity, border_enabled, timestamp_enabled, etc.)
     """
     # Verifica che i file esistano
@@ -133,8 +158,22 @@ def add_watermark_to_pdf(input_pdf_path, watermark_image_path, output_pdf_path,
     # Gestione pagine specifiche anche in modalità standard
     pages_to_process = kwargs.get('pages', 'all')
     exclude_pages = kwargs.get('exclude_pages', None)
-    
-    watermark_pdf_path = create_watermark_pdf(watermark_image_path, scale_factor, position=position)
+
+    # Ricava dimensioni pagina dal PDF originale
+    with open(input_pdf_path, 'rb') as f:
+        reader_tmp = PdfReader(f)
+        first_page = reader_tmp.pages[0]
+        page_size = (
+            float(first_page.mediabox.width),
+            float(first_page.mediabox.height),
+        )
+
+    watermark_pdf_path = create_watermark_pdf(
+        watermark_image_path,
+        scale_factor,
+        position=position,
+        page_size=page_size,
+    )
     
     try:
         # Leggi il PDF originale
@@ -210,37 +249,34 @@ def _has_advanced_features(kwargs):
 
 def _parse_pages_basic(pages_spec, total_pages):
     """Analisi base delle pagine senza il modulo avanzato."""
+    pages = []
+
     if pages_spec == 'first':
-        return [0] if total_pages > 0 else []
+        if total_pages > 0:
+            pages.append(0)
     elif pages_spec == 'last':
-        return [total_pages - 1] if total_pages > 0 else []
+        if total_pages > 0:
+            pages.append(total_pages - 1)
     elif pages_spec.isdigit():
         page_num = int(pages_spec) - 1
-        return [page_num] if 0 <= page_num < total_pages else []
+        if 0 <= page_num < total_pages:
+            pages.append(page_num)
     else:
         # Gestione base di range separati da virgole
-        pages = []
         for part in pages_spec.split(','):
             part = part.strip()
             if '-' in part:
                 try:
                     start, end = map(int, part.split('-'))
-                    pages.extend(range(start-1, min(end, total_pages)))
-                except:
+                    pages.extend(range(start - 1, min(end, total_pages)))
+                except ValueError:
                     continue
             elif part.isdigit():
                 page_num = int(part) - 1
                 if 0 <= page_num < total_pages:
                     pages.append(page_num)
-        return sorted(list(set(pages)))
-        pages = []
-        for part in pages_spec.split(','):
-            part = part.strip()
-            if part.isdigit():
-                page_num = int(part) - 1
-                if 0 <= page_num < total_pages:
-                    pages.append(page_num)
-        return pages
+
+    return sorted(list(set(pages)))
 
 
 def interactive_mode():
@@ -438,46 +474,6 @@ def interactive_mode():
         print(f"\n❌ Errore durante l'elaborazione: {e}")
         print("💡 Suggerimento: Controlla i percorsi dei file e riprova")
     
-    while True:
-        position_input = input("Scegli la posizione (1-4, default 1): ").strip()
-        if position_input in position_map:
-            position = position_map[position_input]
-            break
-        else:
-            print("Scelta non valida. Inserisci un numero da 1 a 4.")
-    
-    # Percorso dell'immagine marchio
-    watermark_path = "sign.png"
-    if not os.path.exists(watermark_path):
-        print(f"Attenzione: Nessun file marchio trovato (sign.png).")
-        watermark_path = input("Inserisci il percorso completo dell'immagine marchio: ").strip().strip('"')    # Input del percorso di output (opzionale)
-    output_input = input("Inserisci il percorso di output (lascia vuoto per generarlo automaticamente): ").strip().strip('"')
-    
-    if output_input:
-        output_path = output_input
-    else:
-        # Genera il percorso di output automaticamente
-        input_path = Path(pdf_path)
-        output_path = str(input_path.parent / (input_path.stem + "_signed" + input_path.suffix))
-    
-    print(f"\n=== Configurazione ===")
-    print(f"PDF di input: {pdf_path}")
-    print(f"Marchio: {watermark_path}")
-    print(f"Fattore di scala: {scale_factor}")
-    print(f"Posizione: {position}")
-    print(f"PDF di output: {output_path}")
-    
-    confirm = input("\nProcedere con l'elaborazione? (s/n): ").strip().lower()
-    if confirm not in ['s', 'si', 'y', 'yes']:
-        print("Operazione annullata.")
-        return
-    
-    try:
-        add_watermark_to_pdf(pdf_path, watermark_path, output_path, scale_factor, position)
-        print(f"\n✅ Successo! PDF firmato salvato in: {output_path}")
-        
-    except Exception as e:
-        print(f"\n❌ Errore durante l'elaborazione: {e}")
 
 
 def command_line_mode():
@@ -525,7 +521,10 @@ Formati immagine supportati: PNG, JPG, JPEG, GIF (SVG con modulo avanzato)
         "-p", "--position",
         choices=["bottom-right", "bottom-left", "top-right", "top-left", "center"],
         default="bottom-right",
-        help="Posizione del marchio (default: bottom-right)"
+        help=(
+            "Posizione del marchio (default: bottom-right). "
+            "Opzioni: bottom-right, bottom-left, top-right, top-left, center"
+        )
     )
     
     # Opzioni per selezione pagine
@@ -642,8 +641,6 @@ Formati immagine supportati: PNG, JPG, JPEG, GIF (SVG con modulo avanzato)
         args.output = str(input_path.parent / output_name)
     
     try:
-        # Prepara parametri avanzati    try:
-        # Prepara parametri avanzati
         kwargs = {}
         
         # Pagine
@@ -1016,8 +1013,9 @@ def add_pdf_metadata(pdf_path: str, metadata: dict) -> None:
 
 def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
                        subject: Optional[str] = None, body: Optional[str] = None,
-                       template_path: Optional[str] = None,
+                       template_path: Optional[str] = None) -> bool: ,
                        ssl_context: Optional[ssl.SSLContext] = None) -> bool:
+
     """
     Invia PDF firmato via email.
     
@@ -1034,20 +1032,34 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
         True se invio riuscito
     """
     try:
+        attachments = []
         # Carica template se specificato
         if template_path and os.path.exists(template_path):
-            with open(template_path, 'r', encoding='utf-8') as f:
-                template_content = f.read()
-                body = template_content.format(
-                    pdf_name=Path(pdf_path).name,
-                    timestamp=datetime.now().strftime("%d/%m/%Y %H:%M")
-                )
+            if template_path.endswith(('.yaml', '.yml')):
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    template_data = yaml.safe_load(f) or {}
+                subject = template_data.get('subject', subject)
+                body = template_data.get('body', body)
+                attachments = template_data.get('additional_attachments', [])
+            else:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    template_content = f.read()
+                body = template_content
         
         if not subject:
             subject = f"PDF Firmato: {Path(pdf_path).name}"
-        
+
         if not body:
             body = f"In allegato il PDF firmato: {Path(pdf_path).name}"
+
+        context = {
+            'filename': Path(pdf_path).name,
+            'pdf_name': Path(pdf_path).name,
+            'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M")
+        }
+
+        subject = subject.format(**context)
+        body = body.format(**context)
           # Crea messaggio email
         msg = MIMEMultipart()
         
@@ -1074,6 +1086,19 @@ def send_email_with_pdf(pdf_path: str, email_config: dict, recipients: list,
                     f'attachment; filename= {Path(pdf_path).name}'
                 )
                 msg.attach(part)
+
+        # Aggiungi eventuali allegati extra dal template
+        for attach_path in attachments:
+            if os.path.exists(attach_path):
+                with open(attach_path, 'rb') as extra_file:
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(extra_file.read())
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename= {Path(attach_path).name}'
+                    )
+                    msg.attach(part)
         
         # Connetti al server e invia - gestisci diverse strutture config
         smtp_config = email_config.get('smtp', email_config)
@@ -1176,11 +1201,16 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
             timestamp_image = create_timestamp_image(timestamp_format, timestamp_custom)
             temp_files.append(timestamp_image)
         
-        # Determina pagine da processare
+        # Determina pagine da processare e dimensioni pagina
         with open(input_pdf_path, 'rb') as file:
             reader = PdfReader(file)
             total_pages = len(reader.pages)
-            
+            first_page = reader.pages[0]
+            page_size = (
+                float(first_page.mediabox.width),
+                float(first_page.mediabox.height),
+            )
+
             pages_to_sign = parse_pages_specification(
                 kwargs.get('pages', 'all'), total_pages
             )
@@ -1198,7 +1228,12 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
             print(f"📋 Pagine selezionate: {', '.join(pages_display)}")
         
         # Crea watermark principale
-        watermark_pdf_path = create_watermark_pdf(processed_image, scale_factor, position=position)
+        watermark_pdf_path = create_watermark_pdf(
+            processed_image,
+            scale_factor,
+            position=position,
+            page_size=page_size,
+        )
         temp_files.append(watermark_pdf_path)
         
         # Crea watermark timestamp se necessario
@@ -1206,7 +1241,12 @@ def add_watermark_to_pdf_advanced(input_pdf_path, watermark_image_path, output_p
         if timestamp_image:
             # Posiziona timestamp in base alla firma
             timestamp_position = _get_timestamp_position(position, kwargs.get('timestamp_position', 'below'))
-            timestamp_pdf_path = create_watermark_pdf(timestamp_image, 0.5, position=timestamp_position)
+            timestamp_pdf_path = create_watermark_pdf(
+                timestamp_image,
+                0.5,
+                position=timestamp_position,
+                page_size=page_size,
+            )
             temp_files.append(timestamp_pdf_path)
         
         # Processa PDF
@@ -1321,9 +1361,15 @@ def _get_timestamp_position(signature_position: str, timestamp_relative: str) ->
         },
         "top-left": {
             "below": "bottom-left",
-            "above": "top-left", 
+            "above": "top-left",
             "left": "top-left",
             "right": "top-right"
+        },
+        "center": {
+            "below": "bottom-right",
+            "above": "top-right",
+            "left": "bottom-left",
+            "right": "bottom-right"
         }
     }
     
@@ -1357,5 +1403,9 @@ def calculate_watermark_size_points(image_path, scale_factor, dpi=300):
     # Applica il fattore di scala
     final_width_points = base_width_points * scale_factor
     final_height_points = base_height_points * scale_factor
-    
+
     return final_width_points, final_height_points, img_width_px, img_height_px
+
+
+if __name__ == "__main__":
+    main()

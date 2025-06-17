@@ -7,7 +7,11 @@ editor visuale per posizionamento e gestione profili.
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, colorchooser, simpledialog
 import tkinter.font as tkFont
-from tkinterdnd2 import DND_FILES, TkinterDnD
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+except ImportError:  # Gestito in main()
+    DND_FILES = None
+    TkinterDnD = None
 import json
 import yaml
 import os
@@ -17,9 +21,13 @@ import threading
 import queue
 from datetime import datetime
 import tempfile
-import fitz  # PyMuPDF per anteprima PDF
+try:
+    import fitz  # PyMuPDF per anteprima PDF
+except ImportError:  # Gestito in main()
+    fitz = None
 import subprocess
 import sys
+import time
 
 # Import delle funzioni dal modulo originale
 from pdf_signer import add_watermark_to_pdf, create_watermark_pdf, calculate_watermark_size_points
@@ -48,7 +56,8 @@ class ConfigManager:
             'default_position': 'bottom-right',
             'default_opacity': 0.8,
             'window_geometry': '1200x800',
-            'preview_quality': 'medium'
+            'preview_quality': 'medium',
+            'benchmark_preview': False
         }
         
         try:
@@ -203,6 +212,7 @@ class PDFPreviewCanvas(tk.Canvas):
         super().__init__(parent, bg='white', relief='sunken', bd=2)
         self.preview_callback = preview_callback
         self.pdf_doc = None
+        self.pdf_path = None
         self.current_page = 0
         self.page_image = None
         self.watermark_image = None
@@ -218,10 +228,12 @@ class PDFPreviewCanvas(tk.Canvas):
         self.bind("<Configure>", self.on_resize)
     
     def load_pdf(self, pdf_path):
-        """Carica un PDF per l'anteprima."""
+        """Carica un PDF per l'anteprima, evitando riaperture inutili."""
         try:
-            self.pdf_doc = fitz.open(pdf_path)
-            self.current_page = 0
+            if self.pdf_doc is None or self.pdf_path != pdf_path:
+                self.pdf_doc = fitz.open(pdf_path)
+                self.pdf_path = pdf_path
+                self.current_page = 0
             self.render_page()
             return True
         except Exception as e:
@@ -1223,10 +1235,13 @@ class PDFSignerGUI:
         if not self.pdf_path.get() or not os.path.exists(self.pdf_path.get()):
             self.status_var.set("Seleziona un PDF valido")
             return
-        
+
+        benchmark = self.config_manager.config.get('benchmark_preview', False)
+        start_time = time.perf_counter() if benchmark else None
+
         self.status_var.set("Caricamento anteprima...")
-        
-        # Carica PDF
+
+        # Carica PDF (verrà riaperto solo se il percorso cambia)
         if self.preview_canvas.load_pdf(self.pdf_path.get()):
             # Imposta watermark
             if self.watermark_path.get() and os.path.exists(self.watermark_path.get()):
@@ -1247,6 +1262,10 @@ class PDFSignerGUI:
                 self.page_label.config(text=f"Pagina: {current_page}/{total_pages}")
         
         self.update_watermark_preview()
+
+        if benchmark and start_time is not None:
+            elapsed = time.perf_counter() - start_time
+            print(f"Tempo aggiornamento anteprima: {elapsed:.4f}s")
     
     def update_watermark_preview(self):
         """Aggiorna l'anteprima del watermark nei controlli."""
@@ -1957,17 +1976,21 @@ def main():
         # Prova a importare PyMuPDF
         import fitz
     except ImportError:
-        print("Installazione di PyMuPDF in corso...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyMuPDF"])
-        import fitz
+        print(
+            "Dipendenza mancante: PyMuPDF. "
+            "Installa manualmente con 'pip install PyMuPDF'."
+        )
+        return
     
     try:
         # Prova a importare tkinterdnd2
         from tkinterdnd2 import TkinterDnD
     except ImportError:
-        print("Installazione di tkinterdnd2 in corso...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "tkinterdnd2"])
-        from tkinterdnd2 import TkinterDnD
+        print(
+            "Dipendenza mancante: tkinterdnd2. "
+            "Installa manualmente con 'pip install tkinterdnd2'."
+        )
+        return
     
     # Crea l'applicazione
     root = TkinterDnD.Tk()
